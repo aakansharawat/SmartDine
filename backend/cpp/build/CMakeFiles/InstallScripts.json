@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/smartdine/backend/cpp/build/cmake_install.cmake",
+		"D:/smartdine/backend/cpp/build/pybind11/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

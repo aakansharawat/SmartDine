@@ -1,0 +1,10 @@
+^D:\SMARTDINE\BACKEND\CPP\BUILD\CMAKEFILES\9DCF60928E8E4822B8EED01CE89CE0F2\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/smartdine/backend/cpp -BD:/smartdine/backend/cpp/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/smartdine/backend/cpp/build/smartdine_cpp_modules.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
