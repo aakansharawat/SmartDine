@@ -70,3 +70,45 @@ class Booking(db.Model):
 
     def __repr__(self):
         return f"<Booking {self.id} at {self.restaurant_id}>"
+
+# --- New models for reservations and orders ---
+
+class Reservation(db.Model):
+    __tablename__ = 'reservations'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    time = db.Column(db.Time, nullable=False)
+    party_size = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')  # pending|confirmed|cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('reservations', lazy=True))
+    restaurant = db.relationship('User', foreign_keys=[restaurant_id])
+
+
+class Order(db.Model):
+    __tablename__ = 'orders'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    total_amount = db.Column(db.Float, nullable=False, default=0.0)
+    status = db.Column(db.String(20), nullable=False, default='placed')  # placed|confirmed|preparing|ready|completed|cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('orders', lazy=True))
+    restaurant = db.relationship('User', foreign_keys=[restaurant_id])
+
+
+class OrderItem(db.Model):
+    __tablename__ = 'order_items'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=False)
+    name_snapshot = db.Column(db.String(120), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False, default=1)
+    unit_price = db.Column(db.Float, nullable=False, default=0.0)
+
+    order = db.relationship('Order', backref=db.backref('items', lazy=True, cascade="all, delete-orphan"))
+    menu = db.relationship('Menu')

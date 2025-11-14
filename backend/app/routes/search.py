@@ -66,7 +66,7 @@ def search_menu_item():
                     distance = calculate_distance(user_lat, user_lon, restaurant_user.latitude, restaurant_user.longitude)
                     restaurants_found[restaurant_id] = {
                         "details": {
-
+                            "restaurant_id": restaurant_user.id,
                             "restaurant_name": restaurant_user.name, 
                             "restaurant_address": restaurant_user.address, 
                             "distance_km": round(distance, 2)

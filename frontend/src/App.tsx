@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Search from './pages/Search'
 import Profile from './pages/Profile'
+import RestaurantDashboard from './pages/RestaurantDashboard'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/search" element={<Search />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/dashboard" element={<RestaurantDashboard />} />
           </Routes>
         </Container>
       </Box>

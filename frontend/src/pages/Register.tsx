@@ -45,7 +45,8 @@ export default function Register() {
       setMessage('Registration successful. Please sign in.')
       setTimeout(() => navigate('/login'), 800)
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Registration failed')
+      const data = err?.response?.data
+      setError(data?.error || data?.details || 'Registration failed')
     } finally {
       setLoading(false)
     }

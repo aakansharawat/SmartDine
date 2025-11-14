@@ -18,10 +18,14 @@ def create_app():
     from app.routes.upload import upload_bp
     from app.routes.search import search_bp
     from app.routes.menu_routes import menu_bp 
+    from app.routes.reservations import reservations_bp
+    from app.routes.orders import orders_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(menu_bp) 
+    app.register_blueprint(reservations_bp)
+    app.register_blueprint(orders_bp)
 
     return app

@@ -19,8 +19,8 @@ frontend/.env
 frontend/.env.*
 
 # ---- Python / Backend ----
-backend/__pycache__/
-backend/*.pyc
+backend/**/__pycache__/
+**/*.pyc
 backend/*.pyo
 backend/.pytest_cache/
 backend/instance/

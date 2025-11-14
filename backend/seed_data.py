@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User, MenuItem, Menu, Booking 
+from app.models import User, MenuItem, Menu, Booking, Reservation, Order, OrderItem
 from datetime import date, timedelta
 import random
 from werkzeug.security import generate_password_hash
@@ -10,7 +10,10 @@ def seed_data():
     try:
         with app.app_context():
             print("--- Starting Database Seeding ---")
-            
+            # Clear in dependency order (children first)
+            db.session.query(OrderItem).delete()
+            db.session.query(Order).delete()
+            db.session.query(Reservation).delete()
             db.session.query(Booking).delete()
             db.session.query(Menu).delete() 
             db.session.query(MenuItem).delete() 
@@ -68,6 +71,24 @@ def seed_data():
                 db.session.add(restaurant)
                 restaurant_users.append(restaurant)
 
+            # Customers
+            customers_raw = [
+                {'name': 'Diner Customer', 'email': 'customer@test.com', 'password': 'password123',
+                 'address': 'Clement Town, Dehradun, Uttarakhand, India', 'latitude': 30.3165, 'longitude': 78.0322},
+                {'name': 'The Spicy Grill', 'email': 'spicygrill@test.com', 'password': 'password123',
+                 'address': 'Connaught Place, New Delhi, India', 'latitude': 28.6315, 'longitude': 77.2167},
+                {'name': 'The extra Spicy', 'email': 'spicygrill12@test.com', 'password': 'password123',
+                 'address': 'Andheri West, Mumbai, India', 'latitude': 19.1360, 'longitude': 72.8295},
+            ]
+            customer_users = []
+            for c in customers_raw:
+                customer = User(
+                    name=c['name'], email=c['email'], password=generate_password_hash(c['password']),
+                    address=c['address'], latitude=c['latitude'], longitude=c['longitude'], is_restaurant=False
+                )
+                db.session.add(customer)
+                customer_users.append(customer)
+
             menu_items = [
                 {'name': 'Spicy Chicken Wings', 'category': 'Appetizer', 'description': 'Crispy wings tossed in a fiery sauce'},
                 {'name': 'Margherita Pizza', 'category': 'Main Course', 'description': 'Classic pizza with fresh mozzarella and basil'},
@@ -92,7 +113,7 @@ def seed_data():
             new_menu_entries_count = 0
             for restaurant in restaurant_users:
                 for item in item_objects:
-                    availability = random.randint(10, 100)
+                    availability = random.randint(20, 150)
                     price = round(random.uniform(5, 50), 2)
 
                     menu_entry = Menu(
@@ -103,11 +124,61 @@ def seed_data():
                     db.session.add(menu_entry)
                     new_menu_entries_count += 1
             db.session.commit()
+
+            # Create some reservations (confirmed)
+            db.session.flush()
+            today = date.today()
+            reservations_created = 0
+            for cust in customer_users:
+                for r in random.sample(restaurant_users, k=min(2, len(restaurant_users))):
+                    res = Reservation(
+                        user_id=cust.id,
+                        restaurant_id=r.id,
+                        date=today + timedelta(days=random.randint(0, 5)),
+                        time=(
+                            # pick an hour slot between 12:00 and 21:00
+                            (lambda h: __import__('datetime').time(h, 0))(random.randint(12, 21))
+                        ),
+                        party_size=random.randint(2, 6),
+                        status='confirmed'
+                    )
+                    db.session.add(res)
+                    reservations_created += 1
+
+            # Create some orders with items and totals
+            db.session.flush()
+            orders_created = 0
+            order_items_created = 0
+            for cust in customer_users:
+                for r in random.sample(restaurant_users, k=min(2, len(restaurant_users))):
+                    order = Order(user_id=cust.id, restaurant_id=r.id, total_amount=0.0, status='placed')
+                    db.session.add(order)
+                    db.session.flush()
+
+                    # pick 2-3 items from this restaurant's menu
+                    menu_rows = Menu.query.filter_by(restaurant_id=r.id).all()
+                    picks = random.sample(menu_rows, k=min(len(menu_rows), random.randint(2, 3)))
+                    total = 0.0
+                    for m in picks:
+                        qty = random.randint(1, 3)
+                        oi = OrderItem(order_id=order.id, menu_id=m.id, name_snapshot=m.name, quantity=qty, unit_price=m.price or 0.0)
+                        db.session.add(oi)
+                        order_items_created += 1
+                        total += qty * (m.price or 0.0)
+                        # optional: reduce availability to reflect orders
+                        if m.availability is not None:
+                            m.availability = max(0, (m.availability or 0) - qty)
+                    order.total_amount = round(total, 2)
+                    orders_created += 1
+
+            db.session.commit()
             
             print("✅ Database seeded successfully for SmartDine!")
             print(f"Created {len(restaurant_users)} restaurants")
             print(f"Created {len(item_objects)} menu items")
             print(f"Created {new_menu_entries_count} menu entries")
+            print(f"Created {reservations_created} reservations")
+            print(f"Created {orders_created} orders and {order_items_created} order items")
 
     except Exception as e:
         db.session.rollback()
