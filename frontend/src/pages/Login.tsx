@@ -22,6 +22,9 @@ export default function Login() {
     try {
       const res = await api.post('/api/auth/login', { email, password })
       localStorage.setItem('token', res.data.access_token)
+      if (res.data?.user) {
+        try { localStorage.setItem('user', JSON.stringify(res.data.user)) } catch {}
+      }
       navigate('/profile')
     } catch (err: any) {
       setError(err?.response?.data?.error || 'Login failed')

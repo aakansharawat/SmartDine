@@ -8,23 +8,32 @@ import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import DarkModeIcon from '@mui/icons-material/DarkModeOutlined'
 import LightModeIcon from '@mui/icons-material/LightModeOutlined'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 export default function NavBar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [authed, setAuthed] = useState<boolean>(false)
+  const [isRestaurant, setIsRestaurant] = useState<boolean>(false)
   const [mode, setMode] = useState<'light'|'dark'>((localStorage.getItem('themeMode') as 'light'|'dark') || 'light')
 
   useEffect(() => {
     const token = localStorage.getItem('token')
     setAuthed(!!token)
-  }, [])
+    try {
+      const raw = localStorage.getItem('user')
+      const u = raw ? JSON.parse(raw) : null
+      setIsRestaurant(!!u?.is_restaurant)
+    } catch { setIsRestaurant(false) }
+  }, [location.pathname])
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     navigate('/login')
     setAuthed(false)
+    setIsRestaurant(false)
   }
 
   return (
@@ -50,6 +59,7 @@ export default function NavBar() {
             <Button component={Link} to="/search" color="primary">Search</Button>
             {authed ? (
               <>
+                {isRestaurant && <Button component={Link} to="/dashboard" color="primary">Dashboard</Button>}
                 <Button component={Link} to="/profile" color="primary">Profile</Button>
                 <Button onClick={logout} color="primary" variant="outlined">Logout</Button>
               </>

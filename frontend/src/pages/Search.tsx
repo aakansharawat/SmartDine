@@ -19,6 +19,11 @@ import DialogActions from '@mui/material/DialogActions'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
+import Radio from '@mui/material/Radio'
+import RadioGroup from '@mui/material/RadioGroup'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import FormControl from '@mui/material/FormControl'
+import FormLabel from '@mui/material/FormLabel'
 
 function useQuery() {
   const { search } = useLocation()
@@ -40,6 +45,8 @@ export default function Search() {
   const [item, setItem] = useState(q.get('item') || '')
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [address, setAddress] = useState('')
+  const [addressMode, setAddressMode] = useState<'saved' | 'custom'>('custom')
+  const [savedAddress, setSavedAddress] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<SearchResult[]>([])
   const [queried, setQueried] = useState(false)
@@ -68,6 +75,24 @@ export default function Search() {
     return () => { active = false }
   }, [item])
 
+  // Fetch saved address from profile if logged in
+  useEffect(() => {
+    let cancelled = false
+    const hasToken = !!localStorage.getItem('token')
+    if (!hasToken) return
+    ;(async () => {
+      try {
+        const res = await api.get('/api/auth/profile')
+        if (!cancelled) {
+          const addr = res?.data?.address || ''
+          setSavedAddress(addr)
+          if (addressMode === 'saved') setAddress(addr)
+        }
+      } catch {}
+    })()
+    return () => { cancelled = true }
+  }, [addressMode])
+
   const handleSearch = async () => {
     if (!item || !address) return
     setLoading(true)
@@ -78,6 +103,7 @@ export default function Search() {
       setResults([])
     } finally {
       setLoading(false)
+      setQueried(true)
     }
   }
 
@@ -138,17 +164,43 @@ export default function Search() {
   return (
     <Stack spacing={3} sx={{ pt: 4 }}>
       <Typography variant="h5" fontWeight={700}>Search restaurants</Typography>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
         <Autocomplete
           freeSolo
           options={suggestions}
           sx={{ flex: 2 }}
           value={item}
           onInputChange={(_event: unknown, v: string) => setItem(v)}
-          renderInput={(params: any) => <TextField {...params} label="Dish name" placeholder="e.g., Burger" />}
+          renderInput={(params: any) => (
+            <TextField
+              {...params}
+              size="small"
+              label="Dish name"
+              placeholder="e.g., Burger"
+              sx={{ '& .MuiInputBase-root': { height: 40 } }}
+            />
+          )}
         />
-        <TextField label="Your address" sx={{ flex: 3 }} value={address} onChange={(e: ChangeEvent<HTMLInputElement>) => setAddress(e.target.value)} placeholder="123 Main St, City" />
-        <Button variant="contained" onClick={runSearch} disabled={loading || !item || !address}>{loading ? 'Searching…' : 'Search'}</Button>
+        <Stack sx={{ flex: 3 }} direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }}>
+          <RadioGroup row value={addressMode} onChange={(_, v) => {
+            const next = (v as 'saved' | 'custom')
+            setAddressMode(next)
+            if (next === 'saved') setAddress(savedAddress)
+          }} sx={{ whiteSpace: 'nowrap' }}>
+            <FormControlLabel value="saved" control={<Radio size="small" />} label="Use saved address" />
+            <FormControlLabel value="custom" control={<Radio size="small" />} label="Custom address" />
+          </RadioGroup>
+          <TextField
+            size="small"
+            label={addressMode === 'saved' ? 'Saved address' : 'Your address'}
+            value={addressMode === 'saved' ? savedAddress : address}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setAddress(e.target.value)}
+            disabled={addressMode === 'saved'}
+            placeholder="ISBT, Dehradun, Uttarakhand, India"
+            sx={{ flex: 1, '& .MuiInputBase-root': { height: 40 } }}
+          />
+        </Stack>
+        <Button variant="contained" onClick={handleSearch} disabled={loading || !item || !address} sx={{ alignSelf: { xs: 'stretch', sm: 'center' }, height: 40, px: 3 }}>{loading ? 'Searching…' : 'Search'}</Button>
       </Stack>
 
       {loading && (
@@ -198,7 +250,7 @@ export default function Search() {
                         <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
                           <Typography>{mi.item_name}</Typography>
                           <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography color="text.secondary">${mi.price.toFixed(2)} • {mi.availability} available</Typography>
+                            <Typography color="text.secondary">₹{mi.price.toFixed(2)} • {mi.availability} available</Typography>
                             <Button size="small" variant="outlined" onClick={() => addToCart(r.details.restaurant_id, r.details.restaurant_name, mi)}>Add</Button>
                           </Stack>
                         </Stack>
@@ -231,14 +283,14 @@ export default function Search() {
                       <Button size="small" variant="outlined" onClick={() => { changeQty(name, -1); setTimeout(clearCartIfEmpty, 0) }}>-</Button>
                       <Typography>{v.quantity}</Typography>
                       <Button size="small" variant="outlined" onClick={() => changeQty(name, 1)}>+</Button>
-                      <Typography color="text.secondary">${(v.price * v.quantity).toFixed(2)}</Typography>
+                      <Typography color="text.secondary">₹{(v.price * v.quantity).toFixed(2)}</Typography>
                     </Stack>
                   </Stack>
                 ))}
               </Stack>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography fontWeight={600}>Total</Typography>
-                <Typography fontWeight={600}>${Object.values(cart).reduce((acc, v) => acc + v.price * v.quantity, 0).toFixed(2)}</Typography>
+                <Typography fontWeight={600}>₹{Object.values(cart).reduce((acc, v) => acc + v.price * v.quantity, 0).toFixed(2)}</Typography>
               </Stack>
               <Stack direction="row" justifyContent="flex-end" spacing={1}>
                 <Button onClick={() => { setCart({}); setCartRestaurantId(null); setCartRestaurantName('') }}>Clear</Button>

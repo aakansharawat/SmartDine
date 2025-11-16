@@ -1,50 +1,70 @@
-# ---- General ----
+# --- Root ignores for SmartDine (Python backend + Node frontend)
+
+# OS / Editors
 .DS_Store
 Thumbs.db
-*.log
-*.tmp
-*.temp
 *.swp
-*.swo
-
-# ---- Node / Frontend ----
-frontend/node_modules/
-frontend/.vite/
-frontend/dist/
-frontend/.eslintcache
-frontend/.parcel-cache/
-
-# Env files (frontend)
-frontend/.env
-frontend/.env.*
-
-# ---- Python / Backend ----
-backend/**/__pycache__/
-**/*.pyc
-backend/*.pyo
-backend/.pytest_cache/
-backend/instance/
-
-# Virtual envs
-venv/
-.env/
-.venv/
-
-# Env files (backend)
-backend/.env
-backend/.env.*
-
-# ---- IDE / Tooling ----
 .vscode/
 .idea/
-*.iml
-*.code-workspace
 
-# ---- OS ----
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+# Env & secrets
+.env
+.env.*
+*.env
 
-# ---- Misc build outputs ----
-coverage/
-.cache/
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+.coverage*
+htmlcov/
+.tox/
+venv/
+ENV/
+.env.local
+
+# Backend build & logs
+backend/.pytest_cache/
+backend/__pycache__/
+backend/instance/
+backend/*.log
+backend/*.sqlite3
+backend/.coverage*
+backend/venv/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/.parcel-cache/
+frontend/.next/
+frontend/.nuxt/
+frontend/.svelte-kit/
+frontend/dist/
+frontend/build/
+frontend/.turbo/
+frontend/.vercel/
+
+# Frontend build artifacts
+*.map
+*.cache/
+*.lock-wscript
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Misc
+*.log
+*.tmp
+*.bak
+*.orig
+
+# Python bytecode anywhere
+**/__pycache__/
+**/*.py[cod]

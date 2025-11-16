@@ -14,6 +14,9 @@ class User(db.Model):
     address = db.Column(db.String(300))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
+    # Reservation capacity settings
+    tables_count = db.Column(db.Integer, default=10)  # number of tables
+    seats_per_table = db.Column(db.Integer, default=4)  # seats per table
     
     menu = db.relationship('Menu', backref='restaurant', lazy=True, cascade="all, delete-orphan") 
 
@@ -27,7 +30,9 @@ class User(db.Model):
             'created_at': self.created_at,
             'address': self.address,
             'latitude': self.latitude,
-            'longitude': self.longitude
+            'longitude': self.longitude,
+            'tables_count': self.tables_count,
+            'seats_per_table': self.seats_per_table
         }
 
 class MenuItem(db.Model): 

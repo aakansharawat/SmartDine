@@ -6,8 +6,6 @@ from app.models import User, Reservation
 
 reservations_bp = Blueprint('reservations', __name__, url_prefix='/api/reservations')
 
-MAX_PARTY_PER_SLOT = 20  # simple capacity per restaurant per timeslot
-
 
 def _parse_date_time(payload):
     try:
@@ -43,10 +41,11 @@ def create_reservation():
     if not restaurant:
         return jsonify({'error': 'Restaurant not found'}), 404
 
-    # Capacity check for this slot
-    existing = Reservation.query.filter_by(restaurant_id=restaurant_id, date=d, time=t).all()
+    # Capacity check for this slot using restaurant capacity settings
+    total_capacity = max(0, int((restaurant.tables_count or 0) * (restaurant.seats_per_table or 0)))
+    existing = Reservation.query.filter_by(restaurant_id=restaurant_id, date=d, time=t, status='confirmed').all()
     booked = sum(r.party_size for r in existing)
-    if booked + party_size > MAX_PARTY_PER_SLOT:
+    if total_capacity == 0 or booked + party_size > total_capacity:
         return jsonify({'error': 'No availability for selected time slot'}), 409
 
     res = Reservation(user_id=user.id, restaurant_id=restaurant_id, date=d, time=t, party_size=party_size, status='confirmed')
@@ -146,3 +145,38 @@ def restaurant_update_reservation(reservation_id: int):
         return jsonify({'message': 'Reservation updated'}), 200
 
     return jsonify({'error': 'Unsupported status'}), 400
+
+
+# Capacity management for restaurants
+@reservations_bp.route('/restaurant/capacity', methods=['GET'])
+@jwt_required()
+def get_my_capacity():
+    current_email = get_jwt_identity()
+    me = User.query.filter_by(email=current_email, is_restaurant=True).first()
+    if not me:
+        return jsonify({'error': 'Not authorized'}), 403
+    return jsonify({
+        'tables_count': me.tables_count or 0,
+        'seats_per_table': me.seats_per_table or 0,
+        'per_slot_capacity': (me.tables_count or 0) * (me.seats_per_table or 0)
+    }), 200
+
+
+@reservations_bp.route('/restaurant/capacity', methods=['PATCH'])
+@jwt_required()
+def update_my_capacity():
+    current_email = get_jwt_identity()
+    me = User.query.filter_by(email=current_email, is_restaurant=True).first()
+    if not me:
+        return jsonify({'error': 'Not authorized'}), 403
+    data = request.get_json() or {}
+    try:
+        if 'tables_count' in data:
+            me.tables_count = max(0, int(data.get('tables_count')))
+        if 'seats_per_table' in data:
+            me.seats_per_table = max(0, int(data.get('seats_per_table')))
+        db.session.commit()
+        return jsonify({'message': 'Capacity updated', 'tables_count': me.tables_count, 'seats_per_table': me.seats_per_table}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update capacity', 'details': str(e)}), 500

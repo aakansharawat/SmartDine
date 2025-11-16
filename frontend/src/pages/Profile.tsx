@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import api from '@/api/client'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
@@ -48,6 +49,7 @@ export default function Profile() {
       try {
         const res = await api.get('/api/auth/profile')
         setUser(res.data)
+        try { localStorage.setItem('user', JSON.stringify(res.data)) } catch {}
         const [r1, r2] = await Promise.all([
           api.get('/api/reservations/mine').catch(() => ({ data: { reservations: [] } } as any)),
           api.get('/api/orders/mine').catch(() => ({ data: { results: [] } } as any)),
@@ -97,6 +99,11 @@ export default function Profile() {
           <Typography><strong>Email:</strong> {user.email}</Typography>
           <Typography><strong>Address:</strong> {user.address}</Typography>
           <Typography><strong>Type:</strong> {user.is_restaurant ? 'Restaurant' : 'Customer'}</Typography>
+          {user.is_restaurant && (
+            <Button component={RouterLink} to="/dashboard" variant="contained" sx={{ mt: 1, alignSelf: 'start' }}>
+              Go to Restaurant Dashboard
+            </Button>
+          )}
         </Stack>
       </Paper>
 
@@ -121,11 +128,11 @@ export default function Profile() {
           {orders.length === 0 && <Typography color="text.secondary">No orders placed yet.</Typography>}
           {orders.map(o => (
             <Stack key={o.id} spacing={0.5}>
-              <Typography>Order #{o.id} • total ${o.total_amount.toFixed(2)} • {o.status}</Typography>
+              <Typography>Order #{o.id} • total ₹{o.total_amount.toFixed(2)} • {o.status}</Typography>
               <Typography color="text.secondary">{new Date(o.created_at).toLocaleString()}</Typography>
               <Stack pl={1}>
                 {o.items.map((it, i) => (
-                  <Typography key={i} color="text.secondary">{it.quantity} x {it.name} @ ${it.unit_price.toFixed(2)}</Typography>
+                  <Typography key={i} color="text.secondary">{it.quantity} x {it.name} @ ₹{it.unit_price.toFixed(2)}</Typography>
                 ))}
               </Stack>
             </Stack>

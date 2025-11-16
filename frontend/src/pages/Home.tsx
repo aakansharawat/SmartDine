@@ -5,6 +5,7 @@ import Button from '@mui/material/Button'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
+import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 
 export default function Home() {
@@ -31,9 +32,25 @@ export default function Home() {
           boxShadow:
             t.palette.mode === 'dark'
               ? '0 6px 24px rgba(0, 0, 0, 0.35)'
-              : '0 8px 28px rgba(0, 0, 0, 0.08)'
+              : '0 8px 28px rgba(0, 0, 0, 0.08)',
+          position: 'relative',
+          overflow: 'hidden'
         })}
       >
+        <Box
+          aria-hidden
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            opacity: 0.12,
+            img: { position: 'absolute', borderRadius: 2, filter: (t) => t.palette.mode === 'dark' ? 'grayscale(0.2)' : 'none' }
+          }}
+        >
+          <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?q=80&w=1200&auto=format&fit=crop" alt="burger" style={{ top: -20, left: -20, width: 220, height: 160, objectFit: 'cover' }} />
+          <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1200&auto=format&fit=crop" alt="pasta" style={{ right: -20, top: 40, width: 220, height: 160, objectFit: 'cover' }} />
+          <img src="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop" alt="sushi" style={{ bottom: -20, left: 120, width: 220, height: 160, objectFit: 'cover' }} />
+        </Box>
         <Stack spacing={3} alignItems="center">
           <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: -0.5 }}>
             Discover delicious dishes near you
